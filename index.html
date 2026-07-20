@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIIMS Mock Test</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    body { background-color: #f5f7fb; padding: 20px 10px; color: #333; line-height: 1.6; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    h1 { font-size: 1.6rem; color: #4a148c; text-align: center; margin-bottom: 5px; }
+    
+    /* NEW: Styling for the dynamic Set Number */
+    .set-display { font-size: 1.2rem; color: #d32f2f; text-align: center; font-weight: bold; margin-bottom: 15px; }
+    
+    h2 { font-size: 1.4rem; color: #673ab7; margin-bottom: 15px; }
+    h3 { font-size: 1.1rem; color: #333; margin-top: 15px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+    ul { margin-left: 20px; margin-bottom: 15px; }
+    li { margin-bottom: 8px; }
+    .input-field { width: 100%; padding: 12px; margin-top: 8px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+    
+    .btn { width: 100%; color: white; border: none; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: background 0.3s; margin-bottom: 10px; }
+    .btn-primary { background: #673ab7; }
+    .btn-primary:active { background: #512da8; }
+    .btn-success { background: #2e7d32; }
+    .btn-success:active { background: #1b5e20; }
+    .btn-secondary { background: #757575; color: white; }
+    .btn-outline { background: transparent; color: #673ab7; border: 2px solid #673ab7; }
+    
+    .timer-banner { position: -webkit-sticky; position: sticky; top: 0; background: #4a148c; color: white; text-align: center; padding: 12px; font-size: 1.2rem; font-weight: bold; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; }
+    .option-label { display: block; padding: 15px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; margin-top: 10px; cursor: pointer; font-size: 1rem; transition: all 0.2s ease; }
+    .option-label:active { background: #e2d9f3; }
+    input[type="radio"] { margin-right: 10px; transform: scale(1.2); }
+    
+    .table-wrapper { overflow-x: auto; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; min-width: 450px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 0.95rem; }
+    th { background-color: #673ab7; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    
+    #name-page, #exam-page, #result-lookup-page, #dashboard-page { display: none; }
+    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #673ab7; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .custom-alert-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; justify-content: center; align-items: center; padding: 20px; }
+    .custom-alert-content { background: white; padding: 25px; border-radius: 8px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+
+    #print-area { display: none; }
+    @page { margin: 0; }
+    @media print {
+      body { margin: 1.5cm; }
+      body > :not(#print-area) { display: none !important; }
+      #print-area { display: block !important; background: white; color: black; padding: 10px; }
+      .report-card { border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; border-radius: 8px; page-break-inside: avoid; }
+      .text-success { color: #2e7d32 !important; font-weight: bold; }
+      .text-danger { color: #d32f2f !important; font-weight: bold; }
+      .text-muted { color: #757575 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- INSTRUCTIONS FRONT PAGE -->
+  <div id="intro-page" class="card">
+    <h1>AIIMS Mock Test</h1>
+    
+    <!-- NEW: Dynamic Set Number Display -->
+    <div id="display-set-number" class="set-display">Loading Version...</div>
+    
+    <h2>The Official AIIMS CRE-5 Exam Pattern:</h2>
+    <ul>
+      <li><strong>Total Time:</strong> 90 Minutes (Strictly divided into 18-Min Blocks)</li>
+      <li><strong>Total Questions:</strong> 100 MCQs (20 Questions per Block)</li>
+      <li><strong>Marking:</strong> +4 for every correct answer, -1 for every incorrect answer.</li>
+    </ul>
+    <h3>Section A (General - 20 Questions)</h3>
+    <p>General Knowledge (5), Reasoning (5), Quantitative Aptitude (5), and Computer Knowledge (5).</p>
+    <h3>Section B (Domain Specific - 80 Questions)</h3>
+    <p>Hematology, Biochemistry, Blood Banking, Microbiology, Histopathology, Clinical Pathology, and Lab Quality Control/Safety.</p>
+    
+    <button type="button" id="btn-go-to-name" class="btn btn-primary" style="margin-top: 25px;">Start Exam</button>
+    <button type="button" id="btn-go-to-results" class="btn btn-outline">View Previous Results</button>
+  </div>
+
+  <!-- NAME CONFIRMATION -->
+  <div id="name-page" class="card">
+    <h2>Candidate Details</h2>
+    <p>Please enter your full name before beginning the test. The timer will start immediately after you click Confirm.</p>
+    <label style="font-weight: bold; display: block; margin-top: 15px;">Full Name *</label>
+    <input type="text" id="candidate-name" class="input-field" required placeholder="Type your name here...">
+    <div id="loading-indicator" style="display:none; text-align:center;">
+      <div class="loader"></div><p>Loading questions...</p>
+    </div>
+    <button type="button" id="btn-confirm-start" class="btn btn-success">Confirm & Begin Exam</button>
+    <button type="button" class="btn btn-secondary btn-home">Back to Home</button>
+  </div>
+
+  <!-- RESULT LOOKUP PAGE -->
+  <div id="result-lookup-page" class="card">
+    <h2>Check Your Results</h2>
+    <p>Enter your exact name used during the exam to fetch your previous attempts.</p>
+    <label style="font-weight: bold; display: block; margin-top: 15px;">Full Name *</label>
+    <input type="text" id="search-name" class="input-field" required placeholder="Type your name here...">
+    <div id="loading-results" style="display:none; text-align:center;">
+      <div class="loader"></div><p>Searching database...</p>
+    </div>
+    <button type="button" id="btn-fetch-results" class="btn btn-primary">Fetch Results</button>
+    <button type="button" class="btn btn-secondary btn-home">Back to Home</button>
+  </div>
+
+  <!-- RESULT DASHBOARD PAGE -->
+  <div id="dashboard-page" class="card">
+    <h2>Performance Dashboard</h2>
+    <p id="dashboard-user-name" style="font-weight: bold; color: #673ab7; margin-bottom: 10px;"></p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Set</th> <!-- NEW: Added Set Column -->
+            <th>Score</th>
+            <th>Correct</th>
+            <th>Wrong</th>
+            <th>Skip</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard-table-body"></tbody>
+      </table>
+    </div>
+    <button type="button" class="btn btn-primary btn-home" style="margin-top: 25px;">Back to Home</button>
+  </div>
+
+  <!-- ACTUAL EXAM & TIMER -->
+  <div id="exam-page">
+    <div class="timer-banner">Time Remaining (This Section): <span id="time-display">18:00</span></div>
+    <form id="examForm">
+      <div id="questions-container"></div>
+    </form>
+  </div>
+
+</div>
+
+<!-- Custom Section Change Alert Container -->
+<div id="custom-alert-modal" class="custom-alert-overlay">
+  <div class="custom-alert-content">
+    <h2 id="custom-alert-title" style="color: #673ab7; margin-bottom: 10px;">Section Update</h2>
+    <p id="custom-alert-message" style="margin-bottom: 20px; font-size: 1.05rem;"></p>
+    <button type="button" id="btn-alert-close" class="btn btn-primary" style="margin-bottom: 0;">OK</button>
+  </div>
+</div>
+
+<!-- Hidden area where the PDF report is generated -->
+<div id="print-area"></div>
+
+<script>
+  // PASTE YOUR NEW APPS SCRIPT WEB APP /exec URL HERE:
+  const API_URL = "https://script.google.com/macros/s/AKfycbyyrf6WWv951hULH_BeacCLKB5BSrwDCvL5PJh7q8EpGHKZwdtmFyoDT5Y3aIHwN22djA/exec"; 
+
+  const introPage = document.getElementById('intro-page');
+  const namePage = document.getElementById('name-page');
+  const examPage = document.getElementById('exam-page');
+  const resultLookupPage = document.getElementById('result-lookup-page');
+  const dashboardPage = document.getElementById('dashboard-page');
+  
+  let countdown; 
+  let examQuestions = [];
+  let currentSetNumber = "1"; 
+  let currentBlock = 0; 
+
+  // Register the Service Worker for PWA Installation
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(function() {
+      console.log('Service Worker Registered');
+    });
+  }
+
+  // Fetch questions from your API
+  window.onload = function() {
+    fetch(API_URL + "?action=getQuestions")
+      .then(response => response.json())
+      .then(data => {
+        examQuestions = data.questions;
+        currentSetNumber = data.setNumber;
+        document.getElementById('display-set-number').textContent = "Question SET " + currentSetNumber;
+      }).catch(err => console.error("Error loading questions:", err));
+  };
+
+  function goHome() {
+    [namePage, examPage, resultLookupPage, dashboardPage].forEach(page => page.style.display = 'none');
+    introPage.style.display = 'block';
+  }
+
+  document.querySelectorAll('.btn-home').forEach(btn => btn.addEventListener('click', goHome));
+  document.getElementById('btn-go-to-name').addEventListener('click', () => { introPage.style.display = 'none'; namePage.style.display = 'block'; });
+  document.getElementById('btn-go-to-results').addEventListener('click', () => { introPage.style.display = 'none'; resultLookupPage.style.display = 'block'; });
+
+  // Fetch Results via API
+  document.getElementById('btn-fetch-results').addEventListener('click', function() {
+    const searchName = document.getElementById('search-name').value.trim();
+    if (!searchName) { alert("Please enter a name to search."); return; }
+    
+    document.getElementById('btn-fetch-results').style.display = 'none';
+    document.getElementById('loading-results').style.display = 'block';
+
+    fetch(API_URL + "?action=getResults&name=" + encodeURIComponent(searchName))
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('btn-fetch-results').style.display = 'block';
+        document.getElementById('loading-results').style.display = 'none';
+        if (data.length === 0) { alert("No results found for that name."); } 
+        else { buildDashboard(searchName, data); }
+      }).catch(err => {
+        alert("Error connecting to database.");
+        document.getElementById('btn-fetch-results').style.display = 'block';
+        document.getElementById('loading-results').style.display = 'none';
+      });
+  });
+
+  function buildDashboard(name, data) {
+    document.getElementById('dashboard-user-name').textContent = "Results for: " + name;
+    const tbody = document.getElementById('dashboard-table-body');
+    tbody.innerHTML = "";
+    data.forEach(row => {
+      tbody.innerHTML += `<tr><td>${row.date}</td><td style="color:#1976d2; font-weight:bold;">${row.setNum}</td><td style="font-weight:bold;">${row.score}</td><td style="color:#2e7d32;">${row.correct}</td><td style="color:#d32f2f;">${row.wrong}</td><td>${row.unanswered}</td></tr>`;
+    });
+    resultLookupPage.style.display = 'none';
+    dashboardPage.style.display = 'block';
+  }
+
+  document.getElementById('btn-confirm-start').addEventListener('click', function() {
+    if (document.getElementById('candidate-name').value.trim() === "") { alert("Please enter your name to proceed."); return; }
+    if (examQuestions.length === 0) {
+      document.getElementById('btn-confirm-start').style.display = 'none';
+      document.getElementById('loading-indicator').style.display = 'block';
+      const checkData = setInterval(() => {
+        if(examQuestions.length > 0) { clearInterval(checkData); buildAndStart(); }
+      }, 500);
+      return;
+    }
+    buildAndStart();
+  });
+
+  function buildAndStart() {
+    let html = "";
+    for (let b = 0; b < 5; b++) {
+      html += `<div id="block-${b}" style="display: ${b === 0 ? 'block' : 'none'};">`;
+      let headerText = b === 0 ? "Section A (General)" : `Section B (Domain Specific) - Part ${b}`;
+      html += `<div class="card" style="background: #ede7f6; text-align: center; border: 2px solid #673ab7;"><h3 style="color:#4a148c; margin-bottom: 5px;">${headerText}</h3><p style="color:#d32f2f; font-weight:bold; font-size: 0.95rem;">Do not refresh the page. This section will auto-submit when the timer ends.</p></div>`;
+
+      let startIdx = b * 20; let endIdx = startIdx + 20;
+      for (let i = startIdx; i < endIdx && i < examQuestions.length; i++) {
+        let q = examQuestions[i];
+        html += `<div class="card" id="card-${q.id}"><p><strong>Q${i + 1}. ${q.text}</strong></p><label class="option-label"><input type="radio" name="${q.id}" value="A"> ${q.optA}</label><label class="option-label"><input type="radio" name="${q.id}" value="B"> ${q.optB}</label><label class="option-label"><input type="radio" name="${q.id}" value="C"> ${q.optC}</label><label class="option-label"><input type="radio" name="${q.id}" value="D"> ${q.optD}</label></div>`;
+      }
+      html += `</div>`;
+    }
+    document.getElementById('questions-container').innerHTML = html;
+    namePage.style.display = 'none';
+    examPage.style.display = 'block';
+    currentBlock = 0; 
+    startBlockTimer();
+  }
+
+  function showCustomAlert(title, message, callback) {
+    document.getElementById('custom-alert-title').textContent = title;
+    document.getElementById('custom-alert-message').textContent = message;
+    const modal = document.getElementById('custom-alert-modal');
+    modal.style.display = 'flex';
+    
+    const closeBtn = document.getElementById('btn-alert-close');
+    const newCloseBtn = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+    
+    newCloseBtn.addEventListener('click', function() {
+      modal.style.display = 'none';
+      if (callback) callback();
+    });
+  }
+
+  function startBlockTimer() {
+    let timeLeft = 18 * 60; 
+    const timerElement = document.getElementById('time-display');
+    
+    countdown = setInterval(function() {
+      let minutes = Math.floor(timeLeft / 60); let seconds = timeLeft % 60;
+      timerElement.textContent = (minutes < 10 ? '0' + minutes : minutes) + ":" + (seconds < 10 ? '0' + seconds : seconds);
+      
+      if (timeLeft <= 0) {
+        clearInterval(countdown);
+        if (currentBlock < 4) {
+          document.getElementById(`block-${currentBlock}`).style.display = 'none';
+          currentBlock++;
+          document.getElementById(`block-${currentBlock}`).style.display = 'block';
+          window.scrollTo(0, 0);
+          showCustomAlert("Time's Up!", `Moving to Block ${currentBlock + 1} of 5.`, function() { startBlockTimer(); });
+        } else {
+          showCustomAlert("Exam Complete", "Your time has concluded. Submitting your answers automatically.", function() { autoSubmit(); });
+        }
+      }
+      timeLeft--;
+    }, 1000);
+  }
+
+  // Submit Exam via API POST request
+  function autoSubmit() {
+    const nameVal = document.getElementById('candidate-name').value.trim();
+    const formData = new FormData(document.getElementById('examForm'));
+    let answers = {};
+    formData.forEach((value, key) => answers[key] = value);
+
+    document.getElementById('examForm').style.display = 'none';
+    document.querySelector('.timer-banner').style.display = 'none';
+    
+    const statusCard = document.createElement('div');
+    statusCard.className = 'card';
+    statusCard.style.textAlign = 'center';
+    statusCard.innerHTML = `<h2>Submitting Exam...</h2><p>Please wait, analyzing answers...</p>`;
+    document.getElementById('exam-page').appendChild(statusCard);
+
+    const payload = JSON.stringify({ name: nameVal, setNumber: currentSetNumber, answers: answers });
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: payload
+    })
+    .then(response => response.json())
+    .then(response => {
+      let printHtml = `<h2 style="color:#673ab7; text-align:center;">AIIMS Mock Test - Performance Report</h2><p><strong>Candidate:</strong> ${nameVal}</p><p><strong>Question Set:</strong> SET ${response.setNumber}</p><p><strong>Final Score:</strong> ${response.score} / 400</p><hr style="margin: 20px 0;">`;
+
+      response.report.forEach(r => {
+        let userStatus = r.isCorrect ? "text-success" : (r.userAns === "Skipped" ? "text-muted" : "text-danger");
+        printHtml += `<div class="report-card"><p><strong>Q${r.qNum}. ${r.question}</strong></p><p style="margin-top:8px;">Your Answer: <span class="${userStatus}">${r.userAns} (${r.userText})</span></p>${!r.isCorrect ? `<p style="margin-top:4px;">Correct Answer: <span class="text-success">${r.correctAns} (${r.correctText})</span></p>` : ''}</div>`;
+      });
+      document.getElementById('print-area').innerHTML = printHtml;
+
+      statusCard.innerHTML = `<h2>${response.message}</h2><p>Your Final Score: <strong style="font-size:1.2rem;">${response.score}</strong></p><p style="color:#666; margin-bottom: 20px;">Your data has been logged securely for SET ${response.setNumber}.</p><button type="button" id="btn-download-pdf" class="btn btn-success">Download Question & Answer Report</button><button type="button" id="btn-soft-reset" class="btn btn-primary" style="margin-top: 15px;">Return to Home Screen</button>`;
+      
+      document.getElementById('btn-download-pdf').addEventListener('click', function() { window.print(); });
+
+      document.getElementById('btn-soft-reset').addEventListener('click', function() {
+        document.getElementById('examForm').reset();
+        document.getElementById('candidate-name').value = "";
+        document.getElementById('examForm').style.display = 'block';
+        document.querySelector('.timer-banner').style.display = 'block';
+        document.getElementById('print-area').innerHTML = ""; 
+        statusCard.remove();
+        goHome();
+      });
+    }).catch(err => {
+      statusCard.innerHTML = `<h2>Connection Error</h2><p>Could not submit exam. Please check your internet.</p>`;
+    });
+  }
+</script>
+
+</body>
+</html>
