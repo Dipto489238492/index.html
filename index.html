@@ -6,6 +6,7 @@
   <title>AIIMS Mock Test</title>
   
   <link rel="manifest" href="./manifest.json">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -417,53 +418,79 @@
 
   // SUBMIT EXAM LOGIC
   function autoSubmit() {
-    const nameVal = document.getElementById('candidate-name').value.trim();
-    const formData = new FormData(document.getElementById('examForm'));
-    let answers = {};
-    formData.forEach((value, key) => answers[key] = value);
+  const nameVal = document.getElementById('candidate-name').value.trim();
+  const formData = new FormData(document.getElementById('examForm'));
+  let answers = {};
+  formData.forEach((value, key) => answers[key] = value);
 
-    document.getElementById('examForm').style.display = 'none';
-    document.querySelector('.timer-banner').style.display = 'none';
-    
-    const statusCard = document.createElement('div');
-    statusCard.className = 'card';
-    statusCard.style.textAlign = 'center';
-    statusCard.innerHTML = `<h2>Submitting Exam...</h2><p>Please wait, analyzing answers...</p>`;
-    document.getElementById('exam-page').appendChild(statusCard);
+  document.getElementById('examForm').style.display = 'none';
+  document.querySelector('.timer-banner').style.display = 'none';
+  
+  const statusCard = document.createElement('div');
+  statusCard.className = 'card';
+  statusCard.style.textAlign = 'center';
+  statusCard.innerHTML = `<h2>Submitting Exam...</h2><p>Please wait, analyzing answers...</p>`;
+  document.getElementById('exam-page').appendChild(statusCard);
 
-    const payload = JSON.stringify({ name: nameVal, setNumber: currentSetNumber, answers: answers });
+  const payload = JSON.stringify({ name: nameVal, setNumber: currentSetNumber, answers: answers });
 
-    fetch(API_URL, {
-      method: 'POST',
-      body: payload
-    })
-    .then(response => response.json())
-    .then(response => {
-      let printHtml = `<h2 style="color:#673ab7; text-align:center;">AIIMS Mock Test - Performance Report</h2><p><strong>Candidate:</strong> ${nameVal}</p><p><strong>Question Set:</strong> SET ${response.setNumber}</p><p><strong>Final Score:</strong> ${response.score} / 400</p><hr style="margin: 20px 0;">`;
+  fetch(API_URL, {
+    method: 'POST',
+    body: payload
+  })
+  .then(response => response.json())
+  .then(response => {
+    let printHtml = `<h2 style="color:#673ab7; text-align:center;">AIIMS Mock Test - Performance Report</h2><p><strong>Candidate:</strong> ${nameVal}</p><p><strong>Question Set:</strong> SET ${response.setNumber}</p><p><strong>Final Score:</strong> ${response.score} / 400</p><hr style="margin: 20px 0;">`;
 
-      response.report.forEach(r => {
-        let userStatus = r.isCorrect ? "text-success" : (r.userAns === "Skipped" ? "text-muted" : "text-danger");
-        printHtml += `<div class="report-card"><p><strong>Q${r.qNum}. ${r.question}</strong></p><p style="margin-top:8px;">Your Answer: <span class="${userStatus}">${r.userAns} (${r.userText})</span></p>${!r.isCorrect ? `<p style="margin-top:4px;">Correct Answer: <span class="text-success">${r.correctAns} (${r.correctText})</span></p>` : ''}</div>`;
-      });
-      document.getElementById('print-area').innerHTML = printHtml;
-
-      statusCard.innerHTML = `<h2>${response.message}</h2><p>Your Final Score: <strong style="font-size:1.2rem;">${response.score}</strong></p><p style="color:#666; margin-bottom: 20px;">Your data has been logged securely for SET ${response.setNumber}.</p><button type="button" id="btn-download-pdf" class="btn btn-success">Download Question & Answer Report</button><button type="button" id="btn-soft-reset" class="btn btn-primary" style="margin-top: 15px;">Return to Home Screen</button>`;
-      
-      document.getElementById('btn-download-pdf').addEventListener('click', function() { window.print(); });
-
-      document.getElementById('btn-soft-reset').addEventListener('click', function() {
-        document.getElementById('examForm').reset();
-        document.getElementById('candidate-name').value = "";
-        document.getElementById('examForm').style.display = 'block';
-        document.querySelector('.timer-banner').style.display = 'block';
-        document.getElementById('print-area').innerHTML = ""; 
-        statusCard.remove();
-        goHome();
-      });
-    }).catch(err => {
-      statusCard.innerHTML = `<h2>Connection Error</h2><p>Could not submit exam. Please check your internet.</p>`;
+    response.report.forEach(r => {
+      let userStatus = r.isCorrect ? "text-success" : (r.userAns === "Skipped" ? "text-muted" : "text-danger");
+      printHtml += `<div class="report-card"><p><strong>Q${r.qNum}. ${r.question}</strong></p><p style="margin-top:8px;">Your Answer: <span class="${userStatus}">${r.userAns} (${r.userText})</span></p>${!r.isCorrect ? `<p style="margin-top:4px;">Correct Answer: <span class="text-success">${r.correctAns} (${r.correctText})</span></p>` : ''}</div>`;
     });
-  }
+    document.getElementById('print-area').innerHTML = printHtml;
+
+    statusCard.innerHTML = `<h2>${response.message}</h2><p>Your Final Score: <strong style="font-size:1.2rem;">${response.score}</strong></p><p style="color:#666; margin-bottom: 20px;">Your data has been logged securely for SET ${response.setNumber}.</p><button type="button" id="btn-download-pdf" class="btn btn-success">Download Question & Answer Report</button><button type="button" id="btn-soft-reset" class="btn btn-primary" style="margin-top: 15px;">Return to Home Screen</button>`;
+    
+    // NEW: html2pdf automatic download logic
+    document.getElementById('btn-download-pdf').addEventListener('click', function() {
+      const printElement = document.getElementById('print-area');
+      
+      // Temporarily show the report area for the PDF capture
+      printElement.style.display = 'block';
+
+      const options = {
+        margin:       0.5,
+        filename:     nameVal + '_AIIMS_Result_SET_' + response.setNumber + '.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      const btn = document.getElementById('btn-download-pdf');
+      const originalText = btn.innerText;
+      btn.innerText = "Generating PDF...";
+      btn.style.opacity = "0.7";
+
+      html2pdf().set(options).from(printElement).save().then(() => {
+        // Hide the report area again and restore button state
+        printElement.style.display = 'none';
+        btn.innerText = originalText;
+        btn.style.opacity = "1";
+      });
+    });
+
+    document.getElementById('btn-soft-reset').addEventListener('click', function() {
+      document.getElementById('examForm').reset();
+      document.getElementById('candidate-name').value = "";
+      document.getElementById('examForm').style.display = 'block';
+      document.querySelector('.timer-banner').style.display = 'block';
+      document.getElementById('print-area').innerHTML = ""; 
+      statusCard.remove();
+      goHome();
+    });
+  }).catch(err => {
+    statusCard.innerHTML = `<h2>Connection Error</h2><p>Could not submit exam. Please check your internet.</p>`;
+  });
+}
 </script>
 
 </body>
