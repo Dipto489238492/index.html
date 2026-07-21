@@ -65,16 +65,15 @@
     
     .missing-list { color: #d32f2f; font-weight: bold; margin: 15px 0; max-height: 120px; overflow-y: auto; word-wrap: break-word; }
 
-    #print-area { display: none; }
-    @page { margin: 0; }
+    #print-area { display: none; background: white; color: black; padding: 20px; }
+    .report-card { border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; border-radius: 8px; page-break-inside: avoid; }
+    .text-success { color: #2e7d32 !important; font-weight: bold; }
+    .text-danger { color: #d32f2f !important; font-weight: bold; }
+    .text-muted { color: #757575 !important; }
+    
     @media print {
-      body { margin: 1.5cm; }
       body > :not(#print-area) { display: none !important; }
-      #print-area { display: block !important; background: white; color: black; padding: 10px; }
-      .report-card { border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; border-radius: 8px; page-break-inside: avoid; }
-      .text-success { color: #2e7d32 !important; font-weight: bold; }
-      .text-danger { color: #d32f2f !important; font-weight: bold; }
-      .text-muted { color: #757575 !important; }
+      #print-area { display: block !important; }
     }
   </style>
 </head>
@@ -458,11 +457,12 @@
       printElement.style.display = 'block';
 
       const options = {
-        margin:       0.5,
+        margin:       0.4,
         filename:     nameVal + '_AIIMS_Result_SET_' + response.setNumber + '.pdf',
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        html2canvas:  { scale: 2, windowWidth: 800 }, /* windowWidth forces a desktop layout so it isn't squished */
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['css', 'legacy'] } /* This forces it to respect the page-break-inside: avoid rule */
       };
 
       const btn = document.getElementById('btn-download-pdf');
