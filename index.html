@@ -469,12 +469,13 @@
       printElement.style.left = '0';
       printElement.style.top = '0';
       printElement.style.margin = '0';
+      printElement.style.zIndex = '9999'; // Ensure it renders on top of everything else
       
       const options = {
         margin:       0.4,
         filename:     nameVal + '_AIIMS_Result_SET_' + response.setNumber + '.pdf',
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, scrollX: 0, scrollY: 0 }, /* scrollX 0 stops the left-side cutoff */
+        html2canvas:  { scale: 2, scrollX: 0, scrollY: 0, useCORS: true }, // Added useCORS just in case
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
         pagebreak:    { mode: ['css', 'legacy'] }
       };
@@ -484,18 +485,22 @@
       btn.innerText = "Generating PDF...";
       btn.style.opacity = "0.7";
 
-      html2pdf().set(options).from(printElement).save().then(() => {
-        // Reset everything back to normal
-        printElement.style.display = 'none';
-        printElement.style.width = '';
-        printElement.style.position = '';
-        printElement.style.left = '';
-        printElement.style.top = '';
-        printElement.style.margin = '';
-        
-        btn.innerText = originalText;
-        btn.style.opacity = "1";
-      });
+      // 🔴 FIX: Add a 500ms delay so the browser has time to physically draw the text on screen
+      setTimeout(() => {
+        html2pdf().set(options).from(printElement).save().then(() => {
+          // Reset everything back to normal
+          printElement.style.display = 'none';
+          printElement.style.width = '';
+          printElement.style.position = '';
+          printElement.style.left = '';
+          printElement.style.top = '';
+          printElement.style.margin = '';
+          printElement.style.zIndex = '';
+          
+          btn.innerText = originalText;
+          btn.style.opacity = "1";
+        });
+      }, 500); 
     });
     
     document.getElementById('btn-soft-reset').addEventListener('click', function() {
