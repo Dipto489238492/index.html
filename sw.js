@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aiims-mock-v5'; // Bump this number on future updates!
+const CACHE_NAME = 'aiims-mock-v6';
 const urlsToCache = [
   './index.html',
   './manifest.json'
