@@ -449,20 +449,22 @@
 
     statusCard.innerHTML = `<h2>${response.message}</h2><p>Your Final Score: <strong style="font-size:1.2rem;">${response.score}</strong></p><p style="color:#666; margin-bottom: 20px;">Your data has been logged securely for SET ${response.setNumber}.</p><button type="button" id="btn-download-pdf" class="btn btn-success">Download Question & Answer Report</button><button type="button" id="btn-soft-reset" class="btn btn-primary" style="margin-top: 15px;">Return to Home Screen</button>`;
     
-    // NEW: html2pdf automatic download logic
+    // NEW: html2pdf automatic download logic (FIXED FOR MOBILE CUTOFF)
     document.getElementById('btn-download-pdf').addEventListener('click', function() {
       const printElement = document.getElementById('print-area');
       
-      // Temporarily show the report area for the PDF capture
+      // Temporarily force desktop width directly on the element so it doesn't get cut off on mobile
       printElement.style.display = 'block';
-
+      printElement.style.width = '800px'; 
+      printElement.style.margin = '0';
+      
       const options = {
         margin:       0.4,
         filename:     nameVal + '_AIIMS_Result_SET_' + response.setNumber + '.pdf',
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, windowWidth: 800 }, /* windowWidth forces a desktop layout so it isn't squished */
+        html2canvas:  { scale: 2 }, /* Removed windowWidth to stop the left-side cutoff */
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['css', 'legacy'] } /* This forces it to respect the page-break-inside: avoid rule */
+        pagebreak:    { mode: ['css', 'legacy'] }
       };
 
       const btn = document.getElementById('btn-download-pdf');
@@ -471,8 +473,11 @@
       btn.style.opacity = "0.7";
 
       html2pdf().set(options).from(printElement).save().then(() => {
-        // Hide the report area again and restore button state
+        // Hide the report area again and remove the temporary styles
         printElement.style.display = 'none';
+        printElement.style.width = '';
+        printElement.style.margin = '';
+        
         btn.innerText = originalText;
         btn.style.opacity = "1";
       });
