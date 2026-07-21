@@ -449,20 +449,23 @@
 
     statusCard.innerHTML = `<h2>${response.message}</h2><p>Your Final Score: <strong style="font-size:1.2rem;">${response.score}</strong></p><p style="color:#666; margin-bottom: 20px;">Your data has been logged securely for SET ${response.setNumber}.</p><button type="button" id="btn-download-pdf" class="btn btn-success">Download Question & Answer Report</button><button type="button" id="btn-soft-reset" class="btn btn-primary" style="margin-top: 15px;">Return to Home Screen</button>`;
     
-    // NEW: html2pdf automatic download logic (FIXED FOR MOBILE CUTOFF)
+    // NEW: html2pdf automatic download logic (BULLETPROOF MOBILE FIX)
     document.getElementById('btn-download-pdf').addEventListener('click', function() {
       const printElement = document.getElementById('print-area');
       
-      // Temporarily force desktop width directly on the element so it doesn't get cut off on mobile
+      // Temporarily force desktop width and absolute position to prevent mobile scroll clipping
       printElement.style.display = 'block';
-      printElement.style.width = '800px'; 
+      printElement.style.width = '800px';
+      printElement.style.position = 'absolute';
+      printElement.style.left = '0';
+      printElement.style.top = '0';
       printElement.style.margin = '0';
       
       const options = {
         margin:       0.4,
         filename:     nameVal + '_AIIMS_Result_SET_' + response.setNumber + '.pdf',
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 }, /* Removed windowWidth to stop the left-side cutoff */
+        html2canvas:  { scale: 2, scrollX: 0, scrollY: 0 }, /* scrollX 0 stops the left-side cutoff */
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
         pagebreak:    { mode: ['css', 'legacy'] }
       };
@@ -473,16 +476,19 @@
       btn.style.opacity = "0.7";
 
       html2pdf().set(options).from(printElement).save().then(() => {
-        // Hide the report area again and remove the temporary styles
+        // Reset everything back to normal
         printElement.style.display = 'none';
         printElement.style.width = '';
+        printElement.style.position = '';
+        printElement.style.left = '';
+        printElement.style.top = '';
         printElement.style.margin = '';
         
         btn.innerText = originalText;
         btn.style.opacity = "1";
       });
     });
-
+    
     document.getElementById('btn-soft-reset').addEventListener('click', function() {
       document.getElementById('examForm').reset();
       document.getElementById('candidate-name').value = "";
